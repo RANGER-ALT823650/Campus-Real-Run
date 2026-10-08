@@ -1,276 +1,93 @@
-# Campus REAL Run
+# Campus-Real-Run
 
-[中文文档](README-zh.md) | [English Document](README.md)
+通过 Python 生成操场 GPX 轨迹，再用 [pymobiledevice3](https://github.com/doronz88/pymobiledevice3) 在 iPhone 上回放模拟定位。首次交互设置路线，后续自动记住参数；每次回放生成独立临时 GPX，结束、报错或 Ctrl+C 后删除。
 
-This tool uses Python to simulate GPS locations on iOS devices for campus running activities. Compared to traditional location simulation tools, it provides a more stable solution.
+## 设备与条件
 
-## Prerequisites
+- iPhone / iPad，建议 iOS 17.4+，开启「设置 → 隐私与安全性 → 开发者模式」。
+- macOS、Linux 或 Windows 电脑，Python 3.11+，USB 数据线；设备需解锁并信任电脑。Windows 需要 Apple 设备驱动。
+- 可访问 iOS 开发者定位服务。本项目安装 `pymobiledevice3 11.19.1`；新版本通常自动建立 tunnel，已有可用 tunnel 也可以继续使用。特殊系统版本和连接方式见[官方连接文档](https://doronz88.github.io/pymobiledevice3/guides/ios17-tunnels/)。
+- 三个 **WGS-84** 坐标，均按「经度 纬度」输入：`point0` 是直道起点，`point1` 是同一直道另一端，`point2` 是对面直道对应点。高德 / 百度坐标需先转换到 WGS-84。
 
-- Python 3.x
-- iOS device (requires proper driver installation, connected to computer, developer mode enabled)
-- Administrator privileges (Windows-UAC, macOS-Linux-sudo)
-
-## Todo
-
-- [x] ~~Currently `main.py` experiences freezing after simulating location for a period of time. After inspection, this is an issue with the `lockdown start-tunnel` command. It mysteriously stops running after a certain time, though manually starting it doesn't have this issue. PRs for solving this issue are welcome.~~ Fixed.
-
-- [x] Add functionality to automatically generate track routes.
-
-- [x] Bilingual support.
-
-## Important Notes
-
-Please read the following content carefully:
-
-- All operations require administrator privileges. Make sure to run the command prompt as **administrator**.
-
-- If you encounter the error "[winError 10054] The remote host forcibly closed an existing connection." **First try restarting your computer and phone, and check if any proxy software is running in the background!** Please check step by step! Each one could trigger this issue! If you have proxy software, please close it!
-
-- Although the program has implemented user-friendly operations for `start-tunnel`, `tunneld`, etc., for first-time users, we still recommend manually operating the command line (see latter part of this document) to better observe any (potential) error messages.
-
-- What if I haven't installed drivers on Windows? I recommend using iMazing. However, I don't recommend using iMazing's virtual location feature as it cannot guarantee location stability (i.e., it will repeatedly jump between target and real locations)
-
-## Credits
-
-- [pymobiledevice3](https://github.com/doronz88/pymobiledevice3) - Python library for interacting with iOS devices
-- [YimingZhanshen](https://github.com/YimingZhanshen) - added the function fluctuation of the running track, but his account has been banned by GitHub, so I modify the code for him.
-
-
-## Package Installation
-
-1. Install required Python packages:
+## 安装
 
 ```bash
-python -m pip install -U pymobiledevice3
+git clone https://github.com/RANGER-ALT823650/Campus-Real-Run.git
+cd Campus-Real-Run
+python3 -m venv .venv
+source .venv/bin/activate  # Windows：.venv\Scripts\activate
+python -m pip install -r requirements.txt
 ```
 
-2. Verify installation:
+连接检查：
 
 ```bash
-pymobiledevice3 version
+pymobiledevice3 usbmux list
+pymobiledevice3 amfi developer-mode-status
+pymobiledevice3 developer dvt ls /
 ```
 
-Ensure the version is 4.14.16 or higher. If not, check the [pymobiledevice3 repository](https://github.com/doronz88/pymobiledevice3) for correct installation instructions.
-
-## Features
-
-- Supports iOS 16 and below devices
-- Supports iOS 17.4+ devices (requires special initialization)
-- Custom route import (supports GPX format)
-- Real-time location simulation
-
-## Usage
-
-1. Run the program with administrator privileges:
+## 运行
 
 ```bash
-# Windows (Administrator privileges)
-python main.py
-
-# Linux/macOS
-sudo python main.py
+python simulate_route.py
 ```
 
-2. Correct program execution steps:
+首次要求填写三个坐标；随后按提示设置配速、圈数、速度波动、位置抖动和采样率，回车保留显示值。设置完成后回车开始，输入 `s` 仅保存，输入 `q` 取消。
 
-- `init`: Initialize device connection
+初始默认值：配速 **3:30/km**（约 **4.762 m/s**）、**10 圈**、速度波动 **±0.2 m/s**、每轴抖动中心幅度 **0.5 m**、抖动幅度波动 **±0.1 m**、采样率 **1 点/秒**。运行结束无需保留 GPX。
 
-  ```bash
-  run> init           # iOS 16 and below
-  run> init --ios17   # iOS 17.4+
-  ```
+设置自动保存到脚本目录的 `.campus-run.json`，下次从中读取；该文件不上传 GitHub。三个点确定跑道形状和单圈距离，圈数确定总距离。换场地时重新指定三个点。
 
-- `start`: Begin location simulation
-
-  ```bash
-  run> start [data.gpx]
-  ```
-
-- `status`: Check current status
-
-  ```bash
-  run> status
-  ```
-
-- `cleanup`: Clean up connections and processes
-
-  ```bash
-  run> cleanup
-  ```
-
-- `exit`: Exit program
-  ```bash
-  run> exit
-  ```
-
-## Route File Format
-
-The program uses GPX format route files. Please refer to relevant documentation for specific format details.
-
-I've provided a default route file `example_data.gpx`, and you can also use the `generate_route.py` script to generate custom routes.
-
-## Important Notes
-
-1. Must run program with administrator/root privileges
-2. Ensure device is properly connected to computer before running commands
-3. For iOS 17.4+ devices, use `init --ios17` command for initialization
-4. Use Ctrl+C to stop location simulation at any time
-5. If reinitialization is needed, use `cleanup` command first to clear existing connections
-
-## Troubleshooting
-
-1. If connection fails, check:
-
-   - If device is properly connected
-   - If running with administrator privileges
-   - If iOS version matches initialization command
-
-2. If location simulation fails, try:
-   - Using `cleanup` command to clear connections
-   - Re-executing `init` command
-   - Confirming route file format is correct
-
-## Manual Command Line Operation Steps
-
-### Note
-
-- If `main.py` works fine for you, you can skip this section.
-- If you're using `iOS 17.3` **or below**, use the following command for `START-TUNNEL` in step 2: `python -m pymobiledevice3 remote start-tunnel`.
-
-### Establishing Connection
-
-1. Open command prompt with administrator privileges and run:
+## 常用命令
 
 ```bash
-python -m pymobiledevice3 remote tunneld
+# 只设置和保存参数，不连接手机（同样可交互填写首次坐标）
+python simulate_route.py --configure-only
+
+# 修改参数：显式传入的值优先，其余值仍由交互引导设置
+python simulate_route.py --pace 3:30 --laps 8 --jitter 0.5 \
+  --speed-variation 0.2 --jitter-variation 0.1 --sample-rate 1
+
+# 跳过引导，直接使用上次保存的参数
+python simulate_route.py --non-interactive
+
+# 修改并保存速度（米/秒）；--speed 与 --pace 二选一
+python simulate_route.py --non-interactive --speed 4.8 --laps 6
+
+# 离线生成、检查、删除 GPX；也会保存参数，不连接手机
+python simulate_route.py --dry-run
+
+# 使用另一份配置，适合多个场地；新配置首次仍须填写坐标
+python simulate_route.py --config ./other-route.json
+
+# 关闭位置抖动
+python simulate_route.py --non-interactive --jitter 0 --jitter-variation 0
+
+# 查看全部参数与单位
+python simulate_route.py --help
 ```
 
-Keep this window running.
+无交互的首次运行需同时提供 `--point0 经度 纬度 --point1 经度 纬度 --point2 经度 纬度`；可组合 `--configure-only` 或 `--dry-run`，先完成设置而不回放。
 
-If running correctly, you'll see output similar to:
+Ctrl+C 停止回放并删除临时 GPX。停止播放后，要恢复真实定位请运行：
 
 ```bash
-INFO:     Started server process [40388]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:49151 (Press CTRL+C to quit)
+pymobiledevice3 developer dvt simulate-location clear
 ```
 
-2. Open another command prompt with administrator privileges and run:
+仍需导出 `data.gpx` 时可以运行 `python generate_route.py`，它使用同一套引导和已保存参数，只导出、不回放。`main.py` 和 `campus_run_gui.py` 为原项目保留的旧入口，新流程使用 `simulate_route.py`。
+
+## 简单原理
+
+将三个经纬度点转换为局部米坐标，用两条直道和两段半圆弯道构建跑道，按累计路程采样。速度和抖动幅度使用有边界的均值回归随机过程，在中心值附近缓慢变化；生成的 GPX 携带时间戳，`pymobiledevice3 ... simulate-location play` 按时间间隔逐点设置设备位置。
+
+默认配速是速度中心值；每次时长会略有变化。随机位置偏移会让相邻点计算的瞬时速度超出目标速度范围，含抖动的距离统计也会与几何路线长度略有不同。是否被某个 App 记录，取决于该 App 的定位与传感器实现。
+
+## 测试与来源
 
 ```bash
-python -m pymobiledevice3 lockdown start-tunnel
+python -m unittest discover -s tests -v
 ```
 
-If running correctly, you'll see output similar to:
-
-```bash
-2024-10-27 19:59:34 TheUnknownThing pymobiledevice3.cli.remote[16932] INFO tunnel created
-Identifier: # UUID OF YOUR DEVICE #
-Interface: pywintun
-Protocol: TunnelProtocol.TCP
-RSD Address: # RSD ADDRESS #
-RSD Port: # RSD PORT #
-Use the follow connection option:
---rsd #RSD ADDRESS # # RSD PORT #
-```
-
-3. Access DVT Service
-   Open another command prompt with administrator privileges and run:
-
-```bash
-python -m pymobiledevice3 developer dvt ls /
-```
-
-If running correctly, you'll see output similar to:
-
-```bash
-2024-10-27 17:41:29 TheUnknownThing __main__[21244] WARNING Got an InvalidServiceError. Trying again over tunneld since it is a developer command
-/usr
-/bin
-/sbin
-/.file
-/etc
-/System
-/var
-/Library
-/private
-/.b
-/dev
-/tmp
-/Applications
-/Developer
-/cores
-```
-
-At this point, you're 99% successful. You can now close all the windows described above, run `python main.py`, and proceed with the user-friendly operations.
-
-### Running Location Simulation
-
-This repository contains two main Python scripts:
-
-1. `generate_route.py` - Generates route files in GeoJSON format
-2. `main.py` - User-friendly operation, establishes connection, imports route, starts simulation
-
-#### Generating Routes
-
-The `generate_route.py` script creates a route with appropriate coordinate spacing. You can customize starting coordinates and distances by modifying script parameters:
-
-Generate route file:
-
-```bash
-python generate_route.py
-```
-
-```python
-# Current default values:
-lon_0 = 121.426028 # replace
-lat_0 = 31.025834 # replace
-
-lon_1 = 121.426265 # replace
-lat_1 = 31.024939 # replace
-
-lon_2 = 121.427101 # replace
-lat_2 = 31.0251 # replace
-
-round_count = 3 # 3 laps around the track
-```
-
-Explanation of the above parameters:
-
-- `lon_0` and `lat_0` are starting coordinates
-- The straight section of the track is between `lon_0, lat_0` and `lon_1, lat_1`
-- The curved section is between `lon_1, lat_1` and `lon_2, lat_2`; the line between these coordinates should be the diameter of the track's curve
-- `round_count` is the number of laps around the track
-
-So your running path is:
-
-- Start from `lon_0, lat_0`
-- Run along the straight section between `lon_0, lat_0` and `lon_1, lat_1`
-- Run around the curve between `lon_1, lat_1` and `lon_2, lat_2`
-- Run straight again, then curve again, back to start
-- Repeat `round_count` times
-
-To find coordinates for specific locations, you can use the [AMap Coordinate Picker](https://lbs.amap.com/tools/picker).
-
-## The use of GUI file
-When you go to run campus_run_gui.py as administrator, the program will first ask you to select the main.py file (which is written based on the functionality implemented in main.py), this is where you need to select the main.py file in the root directory in the dialog box that pops up. Once selected, a visualization window will appear, with functional buttons on the left (consistent with the functions and nomenclature in the main.py file).
-
-In particular, when you click on the help button, an additional window will pop up, and clicking on the corresponding function will bring up the same explanation as in main.py.
-All prompts and processes are displayed in a dialog box in the right center, and the display is consistent with the original's display in the terminal.
-
-In the end, just enjoy it!!!
-
-
-
-## Contributing
-
-Issues and feature improvement requests are welcome!
-
-## Disclaimer
-
-This tool is for educational and testing purposes only. Please comply with local regulations and policies, and use responsibly.
-
-## License
-
-This repository is licensed under GPL-3.0.
+测试离线运行，不连接手机。基于 [TheUnknownThing/Campus-Real-Run](https://github.com/TheUnknownThing/Campus-Real-Run) 扩展，沿用 [GPL-3.0 许可证](LICENSE)。

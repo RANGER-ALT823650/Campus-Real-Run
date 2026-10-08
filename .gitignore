@@ -1,1 +1,16 @@
+# Local environment and generated files
+.DS_Store
+.venv/
+venv/
+__pycache__/
+*.py[cod]
 *.geojson
+*.gpx
+!example_data.gpx
+/track_map.png
+/content/
+
+# Personal route settings (coordinates stay local)
+*.json
+.*.json
+*.tmp
