@@ -4,10 +4,13 @@
 
 ## 设备与条件
 
-- iPhone / iPad，建议 iOS 17.4+，开启「设置 → 隐私与安全性 → 开发者模式」。
-- macOS、Linux 或 Windows 电脑，Python 3.11+，USB 数据线；设备需解锁并信任电脑。Windows 需要 Apple 设备驱动。
-- 可访问 iOS 开发者定位服务。本项目安装 `pymobiledevice3 11.19.1`；新版本通常自动建立 tunnel，已有可用 tunnel 也可以继续使用。特殊系统版本和连接方式见[官方连接文档](https://doronz88.github.io/pymobiledevice3/guides/ios17-tunnels/)。
-- 三个 **WGS-84** 坐标，均按「经度 纬度」输入：`point0` 是直道起点，`point1` 是同一直道另一端，`point2` 是对面直道对应点。高德 / 百度坐标需先转换到 WGS-84。
+硬件很简单：**一台电脑、一根能传输数据的数据线、一台 iPhone。** 软件和手机设置需要准备好：
+
+- **iPhone 使用 iOS 27 Beta 2 及以上系统**，开启「设置 → 隐私与安全性 → 开发者模式」。
+- **使用中国大陆地区 App Store 账号**，并确认手机上能看到「设置 → 隐私与安全性 → 运动与健身 → Restrict Motion Data（限制运动数据）」入口。进入后点击「编辑」，将要使用的跑步 App 加入限制名单，限制其访问运动数据。入口以手机实际设置为准。[入口与账号地区说明](https://www.jinantimes.com.cn/news-62-5321897.html)
+- **电脑安装 Python 3.11+ 和 pymobiledevice3**，支持 macOS、Linux 或 Windows；Windows 还需要可正常识别 iPhone 的 Apple 设备驱动。
+- **连接 iPhone 后选择「信任」**，保持设备解锁，完成开发者服务连接及所需开发者镜像准备。已有可用 tunnel 可以继续使用，其他连接方式见[官方连接文档](https://doronz88.github.io/pymobiledevice3/guides/ios17-tunnels/)。
+- **准备一份路线**：首次运行时输入三个 WGS-84 坐标，脚本自动生成 GPX。坐标均按「经度 纬度」输入：`point0` 是直道起点，`point1` 是同一直道另一端，`point2` 是对面直道对应点。高德 / 百度坐标需先转换到 WGS-84。
 
 ## 安装
 
